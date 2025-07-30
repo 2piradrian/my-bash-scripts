@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_DIR="$HOME/github"
+BASE_DIR="$HOME/disk1/gh_projects"
 
 # For every directory in the base directory
 for dir in "$BASE_DIR"/*/; do
