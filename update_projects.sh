@@ -1,8 +1,8 @@
 #!/bin/bash
 
-BASE_DIR="$HOME/disk1/gh_projects"
+BASE_DIR="$HOME/disk1/github"
 
-# For every directory in the base directory
+# Para cada directorio en la base
 for dir in "$BASE_DIR"/*/; do
   echo "Processing $dir ..."
   cd "$dir" || { echo "Could not enter $dir"; continue; }
@@ -12,16 +12,25 @@ for dir in "$BASE_DIR"/*/; do
     continue
   fi
 
-  # Fetch silently
+  # Fetch silencioso
   git fetch --quiet
 
+  # Obtener las ramas remotas
+  remote_branches=$(git ls-remote --heads origin | awk '{print $2}' | sed 's|refs/heads/||')
+
+  # Ramas que queremos actualizar
   for branch in main master develop; do
-    # Check if remote branch exists
-    if git ls-remote --heads origin "$branch" &>/dev/null; then
+    if echo "$remote_branches" | grep -q "^$branch$"; then
       echo "Updating '$branch' branch..."
-      # Try switching, fallback to creating tracking branch silently
-      git switch --quiet "$branch" 2>/dev/null || git checkout -q -b "$branch" origin/"$branch" &>/dev/null
-      git pull --quiet origin "$branch" &>/dev/null
+
+      # Eliminar index.lock si existe
+      [ -f .git/index.lock ] && rm -f .git/index.lock
+
+      # Cambiar a la rama o crearla si no existe
+      git switch "$branch" 2>/dev/null || git checkout -b "$branch" origin/"$branch"
+
+      # Pull con rebase para resolver divergencias automáticamente
+      git pull --rebase --quiet origin "$branch"
     fi
   done
 
